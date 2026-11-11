@@ -4,45 +4,73 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#101820">
-<title>WallTrace</title>
+<title>WallTrace AR</title>
 <style>
-:root{color-scheme:dark;--bg:#101820;--panel:#1b2833;--muted:#9fb0bd;--accent:#47d7ac}
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:var(--bg);color:#f5f7f8;font:15px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overflow:hidden}
-#app{height:100dvh;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
-header{padding:10px 14px;display:flex;justify-content:space-between;align-items:center;background:#111c25;z-index:2}h1{font-size:19px;margin:0}.sub{font-size:11px;color:var(--muted);margin-top:2px}
-#stage{position:relative;flex:1;min-height:0;background:#05090d;overflow:hidden;touch-action:none}video,canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}canvas{touch-action:none}
-#hint{position:absolute;left:12px;right:12px;top:12px;text-align:center;background:#101820c9;border:1px solid #ffffff26;border-radius:12px;padding:9px;font-size:12px;pointer-events:none}
-#bottom{background:#111c25;padding:10px 12px 12px;display:grid;gap:9px}.row{display:flex;gap:8px;align-items:center}
-select,button{font:inherit;border:1px solid #3a4b59;border-radius:10px;background:var(--panel);color:#fff;padding:11px}select{flex:1;min-width:0}button{font-weight:600}button.primary{background:var(--accent);color:#06251d;border:0}.tools button{flex:1}
-.small{font-size:12px;color:var(--muted);line-height:1.35}#status{font-size:12px;color:#b8c8d2;min-height:16px}#savedList{max-height:60px;overflow:auto;font-size:12px}#savedList button{padding:6px 9px;margin:3px}#fileInput{display:none}
+:root{color-scheme:dark;--bg:#101820;--panel:#1b2833;--muted:#a9bac6;--accent:#47d7ac}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:var(--bg);color:#f5f7f8;font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body{overflow:auto}header{padding:10px 14px;display:flex;justify-content:space-between;align-items:center;background:#111c25;position:sticky;top:0;z-index:5}h1{font-size:19px;margin:0}.sub{font-size:11px;color:var(--muted);margin-top:2px}
+#arWrap{height:48vh;min-height:280px;position:relative;background:#05090d;overflow:hidden}a-scene{width:100%!important;height:100%!important;position:absolute!important;inset:0!important}a-scene .a-canvas{width:100%!important;height:100%!important}
+#arHint{position:absolute;z-index:3;top:10px;left:10px;right:10px;text-align:center;padding:9px;border-radius:10px;background:#101820d9;font-size:12px;pointer-events:none}
+#controls{padding:12px;display:grid;gap:9px;background:#111c25}
+.row{display:flex;gap:8px;align-items:center}select,button{font:inherit;border:1px solid #3a4b59;border-radius:10px;background:var(--panel);color:#fff;padding:11px}select{flex:1;min-width:0}button{font-weight:600}button.primary{background:var(--accent);color:#06251d;border:0}
+#plan{width:100%;height:auto;aspect-ratio:3/2;background:#e9edf0;border-radius:10px;touch-action:none;display:block}
+#status{font-size:12px;color:#c5d3dc;min-height:18px}.small{font-size:12px;color:var(--muted);line-height:1.4}
+#savedList button{padding:6px 9px;margin:3px}.tools button{flex:1}
 </style>
+<script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+<script src="https://raw.githack.com/AR-js-org/AR.js/3.4.5/aframe/build/aframe-ar.js"></script>
 </head>
-<body><div id="app">
-<header><div><h1>WallTrace</h1><div class="sub">Карта кабельных трасс · тестовая версия</div></div><button id="cameraBtn" class="primary">Включить камеру</button></header>
-<div id="stage"><video id="video" autoplay playsinline muted></video><canvas id="draw"></canvas><div id="hint">Включи камеру, выбери тип линии и проведи пальцем по стене</div></div>
-<div id="bottom">
-<div class="row"><select id="kind"><option value="power">⚡ Силовой кабель</option><option value="light">💡 Освещение</option><option value="ethernet">🌐 Интернет / Ethernet</option><option value="water">💧 Водопровод</option><option value="heat">♨️ Отопление</option><option value="other">〰️ Другое</option></select><button id="undo">Отменить</button></div>
-<div class="row tools"><button id="save" class="primary">Сохранить стену</button><button id="load">Открыть</button><button id="clear">Очистить</button></div>
-<div class="row"><button id="export">Экспорт</button><button id="import">Импорт</button><input id="fileInput" type="file" accept="application/json,.json"></div>
-<div id="status">Камера выключена.</div><div class="small">Важно: это пробный видео-слой, а не полноценное AR. Линии сохраняются относительно кадра, приложение не определяет реальные скрытые кабели и не гарантирует совпадение трасс после смены положения телефона. Не используй его как защиту от сверления.</div><div id="savedList"></div>
-</div></div>
+<body>
+<header><div><h1>WallTrace AR</h1><div class="sub">Кабельные трассы с привязкой к маркеру</div></div><button id="save" class="primary">Сохранить</button></header>
+<div id="arWrap">
+ <div id="arHint">Наведи камеру на маркер HIRO, закреплённый на стене</div>
+ <a-scene embedded vr-mode-ui="enabled:false" renderer="logarithmicDepthBuffer:true; precision:mediump" arjs="sourceType:webcam; videoTexture:true; debugUIEnabled:false; trackingMethod:best;" gesture-detector>
+  <a-assets><canvas id="arTexture" width="900" height="600"></canvas></a-assets>
+  <a-marker preset="hiro" id="wallMarker" smooth="true" smoothCount="5" smoothTolerance=".01" smoothThreshold="2">
+   <a-plane position="0 0.008 0" rotation="-90 0 0" width="1.5" height="1" material="shader:flat;src:#arTexture;transparent:true;side:double" canvas-updater></a-plane>
+  </a-marker>
+  <a-entity camera></a-entity>
+ </a-scene>
+</div>
+<div id="controls">
+ <div><b>План стены</b><div class="small">Коснись и проведи пальцем по схеме ниже. Линии появятся на найденном AR-маркере.</div></div>
+ <canvas id="plan" width="900" height="600"></canvas>
+ <div class="row"><select id="kind"><option value="power">⚡ Силовой кабель</option><option value="light">💡 Освещение</option><option value="ethernet">🌐 Интернет / Ethernet</option><option value="water">💧 Водопровод</option><option value="heat">♨️ Отопление</option><option value="other">〰️ Другое</option></select><button id="undo">Отменить</button></div>
+ <div class="row tools"><button id="clear">Очистить план</button><button id="open">Открыть стену</button><button id="export">Экспорт JSON</button></div>
+ <div id="status">Ожидание камеры и маркера. Разреши доступ к камере.</div>
+ <div class="small"><b>Важно:</b> распечатай маркер HIRO (ссылка ниже) и постоянно держи его на стене. Камера должна видеть маркер, иначе AR-слой скроется. Для каждой стены используй отдельный маркер/схему. Это цифровая запись нанесённых тобой трасс, а не детектор скрытой проводки. Не используй как гарантию безопасности при сверлении.</div>
+ <div><a href="https://raw.githack.com/AR-js-org/AR.js/3.4.5/three.js/examples/marker-training/examples/hiro.jpg" target="_blank" rel="noopener" style="color:#47d7ac">Открыть и распечатать маркер HIRO</a></div>
+ <div id="savedList"></div>
+</div>
 <script>
-(()=>{const video=document.getElementById('video'),canvas=document.getElementById('draw'),ctx=canvas.getContext('2d'),stage=document.getElementById('stage'),cameraBtn=document.getElementById('cameraBtn'),kind=document.getElementById('kind'),status=document.getElementById('status'),hint=document.getElementById('hint');
-const colors={power:'#ff4d4d',light:'#ffd84d',ethernet:'#45a6ff',water:'#38d9e6',heat:'#ff8b38',other:'#b68cff'};let stream=null,strokes=[],active=null,currentWall='Стена 1';
-function dims(){const r=stage.getBoundingClientRect();return{w:r.width,h:r.height}}
-function size(){const r=stage.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(r.width*d);canvas.height=Math.round(r.height*d);canvas.style.width=r.width+'px';canvas.style.height=r.height+'px';ctx.setTransform(d,0,0,d,0,0);render()}
-function render(){const{w,h}=dims();ctx.clearRect(0,0,w,h);for(const s of strokes){if(!s.points.length)continue;ctx.beginPath();ctx.strokeStyle=colors[s.kind]||'#fff';ctx.lineWidth=4;ctx.lineCap='round';ctx.lineJoin='round';s.points.forEach((p,i)=>{i?ctx.lineTo(p.x*w,p.y*h):ctx.moveTo(p.x*w,p.y*h)});ctx.stroke();const p=s.points[0];ctx.fillStyle=colors[s.kind];ctx.beginPath();ctx.arc(p.x*w,p.y*h,5,0,Math.PI*2);ctx.fill()}}
-function point(e){const r=canvas.getBoundingClientRect();return{x:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))}}
-canvas.addEventListener('pointerdown',e=>{if(!stream){status.textContent='Сначала включи камеру.';return}e.preventDefault();canvas.setPointerCapture(e.pointerId);active={kind:kind.value,points:[point(e)]};strokes.push(active);render()});
-canvas.addEventListener('pointermove',e=>{if(!active)return;e.preventDefault();active.points.push(point(e));render()});function end(){active=null}canvas.addEventListener('pointerup',end);canvas.addEventListener('pointercancel',end);
-async function startCamera(){try{if(!window.isSecureContext)throw Error('Требуется HTTPS. Открой сайт через GitHub Pages.');if(!navigator.mediaDevices?.getUserMedia)throw Error('Safari не предоставил доступ к камере. Проверь настройки сайта.');stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}});video.srcObject=stream;await video.play();cameraBtn.textContent='Выключить камеру';status.textContent='Камера включена. Рисуй по стене.';hint.textContent='Проведи пальцем по стене, чтобы отметить трассу'}catch(e){status.textContent='Не удалось включить камеру: '+e.message;if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}}}
-function stopCamera(){if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;video.srcObject=null;cameraBtn.textContent='Включить камеру';status.textContent='Камера выключена.'}cameraBtn.onclick=()=>stream?stopCamera():startCamera();
-document.getElementById('undo').onclick=()=>{strokes.pop();render();status.textContent='Последняя линия отменена.'};document.getElementById('clear').onclick=()=>{if(confirm('Удалить все линии?')){strokes=[];render()}};
-function db(){return JSON.parse(localStorage.getItem('walltrace_walls')||'{}')}function list(){const el=document.getElementById('savedList');el.innerHTML='Сохранённые стены: ';Object.keys(db()).forEach(n=>{const b=document.createElement('button');b.textContent=n;b.onclick=()=>openWall(n);el.appendChild(b)})}
-function saveWall(){const name=prompt('Название стены:',currentWall);if(!name)return;currentWall=name;const d=db();d[name]={strokes,updated:new Date().toISOString()};localStorage.setItem('walltrace_walls',JSON.stringify(d));status.textContent='Сохранено: '+name;list()}
-function openWall(n){const d=db();if(!d[n])return;currentWall=n;strokes=d[n].strokes||[];render();status.textContent='Открыта схема: '+n}
-document.getElementById('save').onclick=saveWall;document.getElementById('load').onclick=()=>{const ns=Object.keys(db());if(!ns.length){status.textContent='Нет сохранённых стен.';return}const n=prompt('Введи название стены:\n'+ns.join('\n'),currentWall);if(n)openWall(n)};
-document.getElementById('export').onclick=()=>{const blob=new Blob([JSON.stringify({app:'WallTrace',version:1,strokes},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='walltrace.json';a.click();URL.revokeObjectURL(a.href)};
-document.getElementById('import').onclick=()=>document.getElementById('fileInput').click();document.getElementById('fileInput').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{strokes=JSON.parse(await f.text()).strokes||[];render();status.textContent='Схема импортирована.'}catch(_){status.textContent='Ошибка чтения файла.'}e.target.value=''};
-window.addEventListener('resize',size);size();list();if(!navigator.mediaDevices?.getUserMedia)status.textContent='Для камеры открой страницу по HTTPS в Safari.'})();
-</script></body></html>
+(()=> {
+ const colors={power:'#ff3030',light:'#e5a900',ethernet:'#087bd4',water:'#00a8b8',heat:'#e65b16',other:'#8746c8'};
+ const plan=document.getElementById('plan'),pctx=plan.getContext('2d'),tex=document.getElementById('arTexture'),tctx=tex.getContext('2d');
+ const kind=document.getElementById('kind'),status=document.getElementById('status'),hint=document.getElementById('arHint');
+ let strokes=[],active=null,currentWall='Стена 1';
+ function draw(ctx){ctx.clearRect(0,0,900,600);ctx.fillStyle='#ffffff';ctx.fillRect(0,0,900,600);ctx.strokeStyle='#d8dfe4';ctx.lineWidth=2;ctx.strokeRect(8,8,884,584);
+  for(const s of strokes){if(!s.points.length)continue;ctx.beginPath();ctx.strokeStyle=colors[s.kind]||'#333';ctx.lineWidth=12;ctx.lineCap='round';ctx.lineJoin='round';s.points.forEach((p,i)=>i?ctx.lineTo(p.x*900,p.y*600):ctx.moveTo(p.x*900,p.y*600));ctx.stroke();const q=s.points[0];ctx.fillStyle=colors[s.kind]||'#333';ctx.beginPath();ctx.arc(q.x*900,q.y*600,10,0,Math.PI*2);ctx.fill()}
+  tctx.clearRect(0,0,900,600);tctx.drawImage(plan,0,0);const plane=document.querySelector('[canvas-updater]');if(plane&&plane.components.material){plane.components.material.material.map.needsUpdate=true}
+ }
+ function pos(e){const r=plan.getBoundingClientRect();return{x:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))}}
+ plan.addEventListener('pointerdown',e=>{e.preventDefault();plan.setPointerCapture(e.pointerId);active={kind:kind.value,points:[pos(e)]};strokes.push(active);draw(pctx)});
+ plan.addEventListener('pointermove',e=>{if(!active)return;e.preventDefault();active.points.push(pos(e));draw(pctx)});
+ const end=()=>active=null;plan.addEventListener('pointerup',end);plan.addEventListener('pointercancel',end);
+ document.getElementById('undo').onclick=()=>{strokes.pop();draw(pctx)};
+ document.getElementById('clear').onclick=()=>{if(confirm('Удалить все трассы этой стены?')){strokes=[];draw(pctx)}};
+ function db(){try{return JSON.parse(localStorage.getItem('walltrace_ar_walls')||'{}')}catch(_){return {}}}
+ function list(){const el=document.getElementById('savedList');el.textContent='Сохранённые стены: ';Object.keys(db()).forEach(n=>{const b=document.createElement('button');b.textContent=n;b.onclick=()=>loadWall(n);el.appendChild(b)})}
+ function save(){const name=prompt('Название стены:',currentWall);if(!name)return;currentWall=name;const d=db();d[name]={strokes,updated:new Date().toISOString()};localStorage.setItem('walltrace_ar_walls',JSON.stringify(d));status.textContent='Схема сохранена: '+name;list()}
+ function loadWall(n){const d=db();if(!d[n])return;currentWall=n;strokes=d[n].strokes||[];draw(pctx);status.textContent='Загружена схема: '+n}
+ document.getElementById('save').onclick=save;
+ document.getElementById('open').onclick=()=>{const names=Object.keys(db());if(!names.length){status.textContent='Сохранённых стен пока нет.';return}const n=prompt('Название стены:\n'+names.join('\n'),currentWall);if(n)loadWall(n)};
+ document.getElementById('export').onclick=()=>{const a=document.createElement('a'),u=URL.createObjectURL(new Blob([JSON.stringify({app:'WallTrace AR',version:2,wall:currentWall,strokes},null,2)],{type:'application/json'}));a.href=u;a.download='walltrace-'+currentWall.replace(/[^a-z0-9а-яё_-]/gi,'_')+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)};
+ const marker=document.getElementById('wallMarker');
+ marker.addEventListener('markerFound',()=>{hint.textContent='Маркер найден — трассы привязаны к стене';status.textContent='AR-маркер найден. Рисунок отображается на маркере.'});
+ marker.addEventListener('markerLost',()=>{hint.textContent='Маркер не виден — наведи камеру обратно';status.textContent='Маркер потерян. Найди его камерой, чтобы вернуть AR-слой.'});
+ document.querySelector('a-scene').addEventListener('camera-init',()=>{status.textContent='Камера запущена. Наведи её на маркер HIRO.'});
+ document.querySelector('a-scene').addEventListener('camera-error',()=>{status.textContent='Ошибка камеры. Проверь разрешение Safari и открой сайт по HTTPS.'});
+ draw(pctx);list();
+})();
+</script>
+</body></html>
