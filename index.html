@@ -19,6 +19,7 @@ body{overflow:auto}header{padding:10px 14px;display:flex;justify-content:space-b
 </style>
 <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
 <script src="https://raw.githack.com/AR-js-org/AR.js/3.4.5/aframe/build/aframe-ar.js"></script>
+<script>AFRAME.registerComponent("canvas-updater",{tick:function(){const m=this.el.components.material&&this.el.components.material.material;if(m&&m.map)m.map.needsUpdate=true;}});</script>
 </head>
 <body>
 <header><div><h1>WallTrace AR</h1><div class="sub">Кабельные трассы с привязкой к маркеру</div></div><button id="save" class="primary">Сохранить</button></header>
