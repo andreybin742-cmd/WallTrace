@@ -1,0 +1,53 @@
+// !$*UTF8*$!
+{
+ archiveVersion = 1;
+ classes = {};
+ objectVersion = 56;
+ objects = {
+
+/* Begin PBXBuildFile section */
+  A10000000000000000000001 /* WallTraceApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* WallTraceApp.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+  A20000000000000000000001 /* WallTraceApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WallTraceApp.swift; sourceTree = "<group>"; };
+  A20000000000000000000002 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+  A20000000000000000000003 /* WallTrace.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WallTrace.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+  A30000000000000000000001 = {isa = PBXGroup; children = (A30000000000000000000002 /* WallTrace */, A30000000000000000000003 /* Products */, ); sourceTree = "<group>"; };
+  A30000000000000000000002 /* WallTrace */ = {isa = PBXGroup; path = WallTrace; sourceTree = "<group>"; children = (A20000000000000000000001 /* WallTraceApp.swift */, A20000000000000000000002 /* Info.plist */, ); };
+  A30000000000000000000003 /* Products */ = {isa = PBXGroup; name = Products; sourceTree = "<group>"; children = (A20000000000000000000003 /* WallTrace.app */, ); };
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+  A40000000000000000000001 /* WallTrace */ = {isa = PBXNativeTarget; buildConfigurationList = A70000000000000000000002 /* Build configuration list for PBXNativeTarget "WallTrace" */; buildPhases = (A50000000000000000000001 /* Sources */, A50000000000000000000002 /* Frameworks */, ); buildRules = (); dependencies = (); name = WallTrace; productName = WallTrace; productReference = A20000000000000000000003 /* WallTrace.app */; productType = "com.apple.product-type.application"; };
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+  A40000000000000000000002 /* Project object */ = {isa = PBXProject; attributes = {BuildIndependentTargetsInParallel = 1; LastUpgradeCheck = 1500; TargetAttributes = {A40000000000000000000001 = {CreatedOnToolsVersion = 15.0; }; }; }; buildConfigurationList = A70000000000000000000001 /* Build configuration list for PBXProject "WallTrace" */; compatibilityVersion = "Xcode 14.0"; developmentRegion = en; hasScannedForEncodings = 0; knownRegions = (en, Base, ); mainGroup = A30000000000000000000001; productRefGroup = A30000000000000000000003; projectDirPath = ""; projectRoot = ""; targets = (A40000000000000000000001 /* WallTrace */, ); };
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+  A50000000000000000000001 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000001 /* WallTraceApp.swift in Sources */, ); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXFrameworksBuildPhase section */
+  A50000000000000000000002 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+  A60000000000000000000001 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = WallTrace/Info.plist; IPHONEOS_DEPLOYMENT_TARGET = 16.0; MARKETING_VERSION = 0.1; PRODUCT_BUNDLE_IDENTIFIER = com.andreybin742.walltrace; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2"; }; name = Debug; };
+  A60000000000000000000002 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = WallTrace/Info.plist; IPHONEOS_DEPLOYMENT_TARGET = 16.0; MARKETING_VERSION = 0.1; PRODUCT_BUNDLE_IDENTIFIER = com.andreybin742.walltrace; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2"; }; name = Release; };
+  A60000000000000000000003 /* Debug project */ = {isa = XCBuildConfiguration; buildSettings = {ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; LASTSWIFTUPDATECHECK = 1500; SDKROOT = iphoneos; SWIFT_VERSION = 5.0; }; name = Debug; };
+  A60000000000000000000004 /* Release project */ = {isa = XCBuildConfiguration; buildSettings = {ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; LASTSWIFTUPDATECHECK = 1500; SDKROOT = iphoneos; SWIFT_VERSION = 5.0; }; name = Release; };
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+  A70000000000000000000001 /* Build configuration list for PBXProject "WallTrace" */ = {isa = XCConfigurationList; buildConfigurations = (A60000000000000000000003 /* Debug project */, A60000000000000000000004 /* Release project */, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+  A70000000000000000000002 /* Build configuration list for PBXNativeTarget "WallTrace" */ = {isa = XCConfigurationList; buildConfigurations = (A60000000000000000000001 /* Debug */, A60000000000000000000002 /* Release */, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+/* End XCConfigurationList section */
+ };
+ rootObject = A40000000000000000000002 /* Project object */;
+}
