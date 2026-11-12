@@ -16,13 +16,14 @@
 <div class="walls" id="walls"></div>
 <div class="note">Как работает привязка: приложение сохраняет кадр стены, затем ищет в каждом новом кадре те же визуальные особенности и вычисляет перспективное преобразование. Лучше всего работают стены с фактурой, розетками, углами, дверями или другими неподвижными деталями. На совершенно однотонной стене, при сильном повороте, изменении света или перекрытии обзора трекинг может потеряться. Для точного повторного позиционирования профессионального AR это экспериментальный веб-прототип. Приложение показывает только линии, которые ты сам нанёс, и не обнаруживает скрытую проводку.</div>
 </main>
-<script>var Module={onRuntimeInitialized:function(){window.__walltraceCvReady=true;}};</script><script async src="https://docs.opencv.org/4.x/opencv.js"></script>
+<script>var Module={onRuntimeInitialized:function(){window.__walltraceCvReady=true;document.dispatchEvent(new Event("walltrace-cv-ready"));}};</script><script async src="https://docs.opencv.org/4.x/opencv.js"></script>
 <script>
 (()=>{'use strict';
 const $=id=>document.getElementById(id),video=$('video'),canvas=$('overlay'),ctx=canvas.getContext('2d');
 let stream=null,cvReady=!!window.__walltraceCvReady,reference=null,refMat=null,refKp=null,refDesc=null,strokes=[],currentStroke=null,wallName='Новая стена',db={},tracking=false,lastTrack=0,mode='draw',busy=false;
 const status=t=>$('status').textContent=t;
 const storeKey='walltrace_cv_walls_v1';
+document.addEventListener('walltrace-cv-ready',()=>{cvReady=true;$('cvState').textContent='OpenCV готов';status('OpenCV загружен. Включи веб-камеру для начала работы.')});
 try{db=JSON.parse(localStorage.getItem(storeKey)||'{}')}catch(_){db={}}
 function resize(){const r=canvas.getBoundingClientRect();const w=Math.max(1,Math.round(r.width*devicePixelRatio)),h=Math.max(1,Math.round(r.height*devicePixelRatio));if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}drawOverlay()}
 function imageData(){const c=document.createElement('canvas');c.width=video.videoWidth;c.height=video.videoHeight;c.getContext('2d').drawImage(video,0,0);return c.toDataURL('image/jpeg',.9)}
