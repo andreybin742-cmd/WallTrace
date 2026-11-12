@@ -192,6 +192,10 @@ final class WallTraceViewController: UIViewController, ARSCNViewDelegate, ARSess
         guard let record = document.strokes.first(where: { $0.anchorID == anchorID }),
               let anchor = sceneView.session.currentFrame?.anchors.first(where: { $0.identifier.uuidString == anchorID }),
               let node = sceneView.node(for: anchor) else { return }
+        render(record, on: node)
+    }
+
+    private func render(_ record: StrokeRecord, on node: SCNNode) {
         node.childNodes.forEach { $0.removeFromParentNode() }
         let points = record.points.map { SIMD3<Float>($0[0], $0[1], $0[2]) }
         guard points.count > 1 else { return }
@@ -212,7 +216,8 @@ final class WallTraceViewController: UIViewController, ARSCNViewDelegate, ARSess
     }
 
     func renderer(_ renderer: SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor) {
-        DispatchQueue.main.async { self.redraw(anchorID: anchor.identifier.uuidString) }
+        guard let record = document.strokes.first(where: { $0.anchorID == anchor.identifier.uuidString }) else { return }
+        render(record, on: node)
     }
 
     @objc private func saveAll() {
