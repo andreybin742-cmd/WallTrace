@@ -1,77 +1,57 @@
 <!doctype html>
-<html lang="ru">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="theme-color" content="#101820">
-<title>WallTrace AR</title>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>WallTrace — Windows Webcam</title>
 <style>
-:root{color-scheme:dark;--bg:#101820;--panel:#1b2833;--muted:#a9bac6;--accent:#47d7ac}
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:var(--bg);color:#f5f7f8;font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-body{overflow:auto}header{padding:10px 14px;display:flex;justify-content:space-between;align-items:center;background:#111c25;position:sticky;top:0;z-index:5}h1{font-size:19px;margin:0}.sub{font-size:11px;color:var(--muted);margin-top:2px}
-#arWrap{height:48vh;min-height:280px;position:relative;background:#05090d;overflow:hidden}a-scene{width:100%!important;height:100%!important;position:absolute!important;inset:0!important}a-scene .a-canvas{width:100%!important;height:100%!important}
-#arHint{position:absolute;z-index:3;top:10px;left:10px;right:10px;text-align:center;padding:9px;border-radius:10px;background:#101820d9;font-size:12px;pointer-events:none}
-#controls{padding:12px;display:grid;gap:9px;background:#111c25}
-.row{display:flex;gap:8px;align-items:center}select,button{font:inherit;border:1px solid #3a4b59;border-radius:10px;background:var(--panel);color:#fff;padding:11px}select{flex:1;min-width:0}button{font-weight:600}button.primary{background:var(--accent);color:#06251d;border:0}
-#plan{width:100%;height:auto;aspect-ratio:3/2;background:#e9edf0;border-radius:10px;touch-action:none;display:block}
-#status{font-size:12px;color:#c5d3dc;min-height:18px}.small{font-size:12px;color:var(--muted);line-height:1.4}
-#savedList button{padding:6px 9px;margin:3px}.tools button{flex:1}
-</style>
-<script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-<script src="https://raw.githack.com/AR-js-org/AR.js/3.4.5/aframe/build/aframe-ar.js"></script>
-<script>AFRAME.registerComponent("canvas-updater",{tick:function(){const m=this.el.components.material&&this.el.components.material.material;if(m&&m.map)m.map.needsUpdate=true;}});</script>
-</head>
-<body>
-<header><div><h1>WallTrace AR</h1><div class="sub">Кабельные трассы с привязкой к маркеру</div></div><button id="save" class="primary">Сохранить</button></header>
-<div id="arWrap">
- <div id="arHint">Наведи камеру на маркер HIRO, закреплённый на стене</div>
- <a-scene embedded vr-mode-ui="enabled:false" renderer="logarithmicDepthBuffer:true; precision:mediump" arjs="sourceType:webcam; videoTexture:true; debugUIEnabled:false; trackingMethod:best;" gesture-detector>
-  <a-assets><canvas id="arTexture" width="900" height="600"></canvas></a-assets>
-  <a-marker preset="hiro" id="wallMarker" smooth="true" smoothCount="5" smoothTolerance=".01" smoothThreshold="2">
-   <a-plane position="0 0.008 0" rotation="-90 0 0" width="1.5" height="1" material="shader:flat;src:#arTexture;transparent:true;side:double" canvas-updater></a-plane>
-  </a-marker>
-  <a-entity camera></a-entity>
- </a-scene>
+:root{color-scheme:dark;font-family:Segoe UI,Arial,sans-serif}*{box-sizing:border-box}body{margin:0;background:#10151d;color:#eef3fb}.app{max-width:1100px;margin:auto;padding:18px}.top{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}h1{font-size:25px;margin:4px 0}.sub{color:#9eacbf;font-size:14px}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}.toolbar button,.toolbar select,.toolbar input{background:#243247;color:#fff;border:1px solid #43536a;border-radius:9px;padding:10px 13px;font-size:14px}.toolbar button.primary{background:#1674d1;border-color:#1674d1}.toolbar button:disabled{opacity:.45}.stage{position:relative;width:100%;aspect-ratio:16/9;background:#05080c;border:1px solid #34445b;border-radius:14px;overflow:hidden}.stage video,.stage canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}.stage canvas{touch-action:none}.status{margin:12px 0;padding:12px 14px;border-radius:10px;background:#1a2636;color:#c6d6e9;min-height:44px}.walls{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.wall{background:#202d40;border:1px solid #3b506b;padding:9px 12px;border-radius:8px;cursor:pointer;color:#fff}.wall.active{border-color:#38a0ff}.note{color:#93a2b7;font-size:13px;line-height:1.5;margin-top:18px}.pill{padding:5px 9px;border-radius:20px;background:#253449;color:#9ed0ff;font-size:12px}
+</style></head><body><main class="app">
+<div class="top"><div><h1>WallTrace</h1><div class="sub">Компьютерная привязка кабельных трасс к изображению стены</div></div><span class="pill" id="cvState">Загрузка OpenCV…</span></div>
+<div class="toolbar">
+<button class="primary" id="camera">Включить веб-камеру</button>
+<select id="mode"><option value="draw">Создание трассы</option><option value="view">Просмотр трасс</option></select>
+<button id="capture" disabled>Запомнить стену</button><button id="save" disabled>Сохранить стену</button>
+<button id="undo" disabled>Отменить линию</button><button id="clear" disabled>Очистить линии</button>
+<button id="export">Экспорт JSON</button><label style="padding:10px 4px">Импорт <input id="import" type="file" accept="application/json" style="max-width:160px"></label>
 </div>
-<div id="controls">
- <div><b>План стены</b><div class="small">Коснись и проведи пальцем по схеме ниже. Линии появятся на найденном AR-маркере.</div></div>
- <canvas id="plan" width="900" height="600"></canvas>
- <div class="row"><select id="kind"><option value="power">⚡ Силовой кабель</option><option value="light">💡 Освещение</option><option value="ethernet">🌐 Интернет / Ethernet</option><option value="water">💧 Водопровод</option><option value="heat">♨️ Отопление</option><option value="other">〰️ Другое</option></select><button id="undo">Отменить</button></div>
- <div class="row tools"><button id="clear">Очистить план</button><button id="open">Открыть стену</button><button id="export">Экспорт JSON</button></div>
- <div id="status">Ожидание камеры и маркера. Разреши доступ к камере.</div>
- <div class="small"><b>Важно:</b> распечатай маркер HIRO (ссылка ниже) и постоянно держи его на стене. Камера должна видеть маркер, иначе AR-слой скроется. Для каждой стены используй отдельный маркер/схему. Это цифровая запись нанесённых тобой трасс, а не детектор скрытой проводки. Не используй как гарантию безопасности при сверлении.</div>
- <div><a href="https://raw.githack.com/AR-js-org/AR.js/3.4.5/three.js/examples/marker-training/examples/hiro.jpg" target="_blank" rel="noopener" style="color:#47d7ac">Открыть и распечатать маркер HIRO</a></div>
- <div id="savedList"></div>
-</div>
+<div class="stage"><video id="video" autoplay playsinline muted></video><canvas id="overlay"></canvas></div>
+<div class="status" id="status">1. Разреши доступ к веб-камере. 2. Наведи камеру на стену и нажми «Запомнить стену». 3. Нарисуй трассу мышкой.</div>
+<div class="walls" id="walls"></div>
+<div class="note">Как работает привязка: приложение сохраняет кадр стены, затем ищет в каждом новом кадре те же визуальные особенности и вычисляет перспективное преобразование. Лучше всего работают стены с фактурой, розетками, углами, дверями или другими неподвижными деталями. На совершенно однотонной стене, при сильном повороте, изменении света или перекрытии обзора трекинг может потеряться. Для точного повторного позиционирования профессионального AR это экспериментальный веб-прототип. Приложение показывает только линии, которые ты сам нанёс, и не обнаруживает скрытую проводку.</div>
+</main>
+<script async src="https://docs.opencv.org/4.x/opencv.js"></script>
 <script>
-(()=> {
- const colors={power:'#ff3030',light:'#e5a900',ethernet:'#087bd4',water:'#00a8b8',heat:'#e65b16',other:'#8746c8'};
- const plan=document.getElementById('plan'),pctx=plan.getContext('2d'),tex=document.getElementById('arTexture'),tctx=tex.getContext('2d');
- const kind=document.getElementById('kind'),status=document.getElementById('status'),hint=document.getElementById('arHint');
- let strokes=[],active=null,currentWall='Стена 1';
- function draw(ctx){ctx.clearRect(0,0,900,600);ctx.fillStyle='#ffffff';ctx.fillRect(0,0,900,600);ctx.strokeStyle='#d8dfe4';ctx.lineWidth=2;ctx.strokeRect(8,8,884,584);
-  for(const s of strokes){if(!s.points.length)continue;ctx.beginPath();ctx.strokeStyle=colors[s.kind]||'#333';ctx.lineWidth=12;ctx.lineCap='round';ctx.lineJoin='round';s.points.forEach((p,i)=>i?ctx.lineTo(p.x*900,p.y*600):ctx.moveTo(p.x*900,p.y*600));ctx.stroke();const q=s.points[0];ctx.fillStyle=colors[s.kind]||'#333';ctx.beginPath();ctx.arc(q.x*900,q.y*600,10,0,Math.PI*2);ctx.fill()}
-  tctx.clearRect(0,0,900,600);tctx.drawImage(plan,0,0);const plane=document.querySelector('[canvas-updater]');if(plane&&plane.components.material){plane.components.material.material.map.needsUpdate=true}
- }
- function pos(e){const r=plan.getBoundingClientRect();return{x:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))}}
- plan.addEventListener('pointerdown',e=>{e.preventDefault();plan.setPointerCapture(e.pointerId);active={kind:kind.value,points:[pos(e)]};strokes.push(active);draw(pctx)});
- plan.addEventListener('pointermove',e=>{if(!active)return;e.preventDefault();active.points.push(pos(e));draw(pctx)});
- const end=()=>active=null;plan.addEventListener('pointerup',end);plan.addEventListener('pointercancel',end);
- document.getElementById('undo').onclick=()=>{strokes.pop();draw(pctx)};
- document.getElementById('clear').onclick=()=>{if(confirm('Удалить все трассы этой стены?')){strokes=[];draw(pctx)}};
- function db(){try{return JSON.parse(localStorage.getItem('walltrace_ar_walls')||'{}')}catch(_){return {}}}
- function list(){const el=document.getElementById('savedList');el.textContent='Сохранённые стены: ';Object.keys(db()).forEach(n=>{const b=document.createElement('button');b.textContent=n;b.onclick=()=>loadWall(n);el.appendChild(b)})}
- function save(){const name=prompt('Название стены:',currentWall);if(!name)return;currentWall=name;const d=db();d[name]={strokes,updated:new Date().toISOString()};localStorage.setItem('walltrace_ar_walls',JSON.stringify(d));status.textContent='Схема сохранена: '+name;list()}
- function loadWall(n){const d=db();if(!d[n])return;currentWall=n;strokes=d[n].strokes||[];draw(pctx);status.textContent='Загружена схема: '+n}
- document.getElementById('save').onclick=save;
- document.getElementById('open').onclick=()=>{const names=Object.keys(db());if(!names.length){status.textContent='Сохранённых стен пока нет.';return}const n=prompt('Название стены:\n'+names.join('\n'),currentWall);if(n)loadWall(n)};
- document.getElementById('export').onclick=()=>{const a=document.createElement('a'),u=URL.createObjectURL(new Blob([JSON.stringify({app:'WallTrace AR',version:2,wall:currentWall,strokes},null,2)],{type:'application/json'}));a.href=u;a.download='walltrace-'+currentWall.replace(/[^a-z0-9а-яё_-]/gi,'_')+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)};
- const marker=document.getElementById('wallMarker');
- marker.addEventListener('markerFound',()=>{hint.textContent='Маркер найден — трассы привязаны к стене';status.textContent='AR-маркер найден. Рисунок отображается на маркере.'});
- marker.addEventListener('markerLost',()=>{hint.textContent='Маркер не виден — наведи камеру обратно';status.textContent='Маркер потерян. Найди его камерой, чтобы вернуть AR-слой.'});
- document.querySelector('a-scene').addEventListener('camera-init',()=>{status.textContent='Камера запущена. Наведи её на маркер HIRO.'});
- document.querySelector('a-scene').addEventListener('camera-error',()=>{status.textContent='Ошибка камеры. Проверь разрешение Safari и открой сайт по HTTPS.'});
- draw(pctx);list();
+(()=>{'use strict';
+const $=id=>document.getElementById(id),video=$('video'),canvas=$('overlay'),ctx=canvas.getContext('2d');
+let stream=null,cvReady=false,reference=null,refMat=null,refKp=null,refDesc=null,strokes=[],currentStroke=null,wallName='Новая стена',db={},tracking=false,lastTrack=0,mode='draw',busy=false;
+const status=t=>$('status').textContent=t;
+const storeKey='walltrace_cv_walls_v1';
+try{db=JSON.parse(localStorage.getItem(storeKey)||'{}')}catch(_){db={}}
+function resize(){const r=canvas.getBoundingClientRect();const w=Math.max(1,Math.round(r.width*devicePixelRatio)),h=Math.max(1,Math.round(r.height*devicePixelRatio));if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}drawOverlay()}
+function imageData(){const c=document.createElement('canvas');c.width=video.videoWidth;c.height=video.videoHeight;c.getContext('2d').drawImage(video,0,0);return c.toDataURL('image/jpeg',.9)}
+function matFromData(url,done){const im=new Image();im.onload=()=>{const c=document.createElement('canvas');c.width=im.width;c.height=im.height;c.getContext('2d').drawImage(im,0,0);done(cv.imread(c))};im.src=url}
+function prepareReference(mat){if(refMat)refMat.delete();if(refDesc)refDesc.delete();refMat=mat;const gray=new cv.Mat();cv.cvtColor(refMat,gray,cv.COLOR_RGBA2GRAY);refKp=new cv.KeyPointVector();refDesc=new cv.Mat();const orb=new cv.ORB(1800);orb.detectAndCompute(gray,new cv.Mat(),refKp,refDesc);gray.delete();orb.delete();if(refDesc.rows<12){status('На стене мало заметных деталей. Наведи камеру так, чтобы в кадре были углы, розетки, текстура или предметы рядом со стеной.');return false}return true}
+function setCanvasFit(){resize()}
+async function startCamera(){try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}},audio:false});video.srcObject=stream;await video.play();setCanvasFit();status('Камера включена. Наведи её на стену, дождись чёткого изображения и нажми «Запомнить стену».');$('capture').disabled=false;$('mode').disabled=false;requestAnimationFrame(loop)}catch(e){status('Не удалось включить веб-камеру: '+e.message+'. Проверь разрешение браузера и подключение камеры.')}}
+function captureWall(){if(!video.videoWidth)return;reference=imageData();strokes=[];wallName=prompt('Название стены:','Стена '+(Object.keys(db).length+1))||'Стена';matFromData(reference,m=>{const ok=prepareReference(m);tracking=false;status(ok?'Основа стены сохранена. Теперь рисуй кабель мышкой прямо на изображении.':'Кадр сохранён, но для надёжной привязки нужно больше деталей. Попробуй другой ракурс.');$('save').disabled=false;$('undo').disabled=false;$('clear').disabled=false;drawOverlay()})}
+function coords(e){const r=canvas.getBoundingClientRect();return [(e.clientX-r.left)/r.width,(e.clientY-r.top)/r.height]}
+canvas.addEventListener('pointerdown',e=>{if(mode!=='draw'||!reference||!refMat)return;canvas.setPointerCapture(e.pointerId);const p=coords(e);currentStroke=[p];strokes.push(currentStroke);drawOverlay()});
+canvas.addEventListener('pointermove',e=>{if(!currentStroke)return;currentStroke.push(coords(e));drawOverlay()});
+function endDraw(){currentStroke=null}canvas.addEventListener('pointerup',endDraw);canvas.addEventListener('pointercancel',endDraw);
+function drawPath(c,points,w,h){if(!points||points.length<1)return;c.beginPath();c.moveTo(points[0][0]*w,points[0][1]*h);for(let i=1;i<points.length;i++)c.lineTo(points[i][0]*w,points[i][1]*h);c.strokeStyle='#ff3b30';c.lineWidth=Math.max(3,w*.004);c.lineCap='round';c.lineJoin='round';c.stroke()}
+function drawOverlay(){if(!canvas.width)return;ctx.clearRect(0,0,canvas.width,canvas.height);if(!reference)return;const w=canvas.width,h=canvas.height;if(mode==='draw'){for(const s of strokes)drawPath(ctx,s,w,h)}}
+function saveWall(){if(!reference)return;db[wallName]={name:wallName,reference,strokes,updated:new Date().toISOString()};localStorage.setItem(storeKey,JSON.stringify(db));renderWalls();status('Стена «'+wallName+'» сохранена в этом браузере. Для просмотра выбери режим «Просмотр трасс» и эту стену.') }
+function renderWalls(){const el=$('walls');el.innerHTML='';Object.keys(db).forEach(n=>{const b=document.createElement('button');b.className='wall'+(n===wallName?' active':'');b.textContent=n;b.onclick=()=>loadWall(n);el.appendChild(b)})}
+function loadWall(n){const d=db[n];if(!d)return;wallName=n;reference=d.reference;strokes=d.strokes||[];tracking=false;matFromData(reference,m=>{const ok=prepareReference(m);renderWalls();status(ok?'Загружена «'+n+'». Наведи камеру на ту же стену. Идёт поиск совпадения…':'У загруженной стены недостаточно визуальных особенностей.');});}
+function transformPoint(H,x,y){const a=H.data64F;const z=a[6]*x+a[7]*y+a[8];return [(a[0]*x+a[1]*y+a[2])/z,(a[3]*x+a[4]*y+a[5])/z]}
+function trackFrame(){if(!cvReady||!reference||!refDesc||!video.videoWidth||busy)return;busy=true;let src,gray,kp,desc,orb,bf,knn,srcPts,dstPts,mask,H;try{
+src=new cv.Mat(video.videoHeight,video.videoWidth,cv.CV_8UC4);const tmp=document.createElement('canvas');tmp.width=video.videoWidth;tmp.height=video.videoHeight;tmp.getContext('2d').drawImage(video,0,0);src=cv.imread(tmp);gray=new cv.Mat();cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY);kp=new cv.KeyPointVector();desc=new cv.Mat();orb=new cv.ORB(1800);orb.detectAndCompute(gray,new cv.Mat(),kp,desc);bf=new cv.BFMatcher(cv.NORM_HAMMING,false);knn=new cv.DMatchVectorOfVector();bf.knnMatch(refDesc,desc,knn,2);srcPts=[];dstPts=[];
+for(let i=0;i<knn.size();i++){const v=knn.get(i);if(v.size()>=2){const m=v.get(0),n=v.get(1);if(m.distance<.72*n.distance){const a=refKp.get(m.queryIdx).pt,b=kp.get(m.trainIdx).pt;srcPts.push(a.x,a.y);dstPts.push(b.x,b.y)}}}
+if(srcPts.length>=10){const s=cv.matFromArray(srcPts.length/2,1,cv.CV_32FC2,srcPts),d=cv.matFromArray(dstPts.length/2,1,cv.CV_32FC2,dstPts);mask=new cv.Mat();H=cv.findHomography(s,d,cv.RANSAC,4,mask);const inliers=mask.data.reduce((a,b)=>a+(b?1:0),0);if(!H.empty()&&inliers>=8){tracking=true;ctx.clearRect(0,0,canvas.width,canvas.height);const rect=canvas.getBoundingClientRect(),sx=rect.width/video.videoWidth*devicePixelRatio,sy=rect.height/video.videoHeight*devicePixelRatio;for(const line of strokes){if(line.length<1)continue;ctx.beginPath();line.forEach((p,i)=>{const q=transformPoint(H,p[0]*refMat.cols,p[1]*refMat.rows);const x=q[0]*sx,y=q[1]*sy;i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.strokeStyle='#ff3b30';ctx.lineWidth= Math.max(3,canvas.width*.004);ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke()}status('Стена найдена · совпадений: '+inliers+' · кабель отображается на поверхности');}else{tracking=false;status('Ищу сохранённую стену… Наведи камеру на неё более прямо.')}s.delete();d.delete()}else{tracking=false;status('Ищу сохранённую стену… совпадений пока мало.')}
+}catch(e){console.error(e)}finally{[src,gray,kp,desc,orb,bf,knn,mask,H].forEach(x=>{try{x&&x.delete()}catch(_){}});busy=false}}
+function loop(t){if(t-lastTrack>250){lastTrack=t;if(mode==='view'&&reference)trackFrame();}requestAnimationFrame(loop)}
+$('camera').onclick=startCamera;$('capture').onclick=captureWall;$('save').onclick=saveWall;$('undo').onclick=()=>{strokes.pop();drawOverlay()};$('clear').onclick=()=>{strokes=[];drawOverlay()};$('mode').onchange=()=>{mode=$('mode').value;status(mode==='draw'?'Режим создания: рисуй мышкой по сохранённому кадру стены.':'Режим просмотра: приложение ищет сохранённую стену в видеопотоке.');if(mode==='draw')drawOverlay()};
+$('export').onclick=()=>{const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='walltrace-backup.json';a.click();URL.revokeObjectURL(a.href)};
+$('import').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const x=JSON.parse(await f.text());db={...db,...x};localStorage.setItem(storeKey,JSON.stringify(db));renderWalls();status('Импорт завершён. Выбери стену из списка.')}catch(_){status('Не удалось прочитать JSON-файл.')}};
+window.addEventListener('resize',setCanvasFit);
+window.Module={onRuntimeInitialized(){cvReady=true;$('cvState').textContent='OpenCV готов';status('OpenCV загружен. Включи веб-камеру для начала работы.')}};
+renderWalls();
 })();
-</script>
-</body></html>
+</script></body></html>
