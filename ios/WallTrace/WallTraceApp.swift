@@ -217,11 +217,11 @@ final class WallTraceViewController: UIViewController, ARSCNViewDelegate, ARSess
 
     @objc private func saveAll() {
         finishStroke()
-        guard let frame = sceneView.session.currentFrame else {
+        guard sceneView.session.currentFrame != nil else {
             statusLabel.text = "Пока нет AR-сессии для сохранения."
             return
         }
-        frame.session.getCurrentWorldMap { [weak self] map, error in
+        sceneView.session.getCurrentWorldMap { [weak self] map, error in
             guard let self = self, let map = map, error == nil else {
                 DispatchQueue.main.async { self?.statusLabel.text = "Не удалось сохранить карту. Ещё немного просканируйте стену." }
                 return
