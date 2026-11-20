@@ -103,7 +103,8 @@ if(!anyPinch&&!pinchWasActive)draggedEndpoint=null;
 }else{pinchWasActive=false;draggedEndpoint=null}
 strings.forEach(s=>drawString(s,s.id===selectedId));
 // A pluck is a fingertip crossing a saved string, not merely landing near it.
-lastResults.forEach((hand,hi)=>fingerTips.forEach(fi=>{if(fi===8)return;const p=pt(hand,fi),key=hi+':'+fi,prev=lastTips.get(key);if(prev){const move=Math.hypot(p.x-prev.x,p.y-prev.y);if(move>3){strings.forEach(s=>{const d0=distancePointSegment(prev,s.a,s.b),d1=distancePointSegment(p,s.a,s.b),side0=signedSide(prev,s.a,s.b),side1=signedSide(p,s.a,s.b),cross=side0*side1<=0;if((cross&&Math.min(d0,d1)<26)||d1<12&&d0>22){const hitKey=s.id+':'+key,now=performance.now();if(now-(lastHit.get(hitKey)||0)>180){lastHit.set(hitKey,now);pluck(s,move)}}})}}lastTips.set(key,p)}));
+// Струны щипаем ТОЛЬКО кончиком указательного пальца (landmark 8).
+lastResults.forEach((hand,hi)=>{const fi=8,p=pt(hand,fi),key=hi+':index',prev=lastTips.get(key);if(prev){const move=Math.hypot(p.x-prev.x,p.y-prev.y);if(move>3){strings.forEach(s=>{const d0=distancePointSegment(prev,s.a,s.b),d1=distancePointSegment(p,s.a,s.b),side0=signedSide(prev,s.a,s.b),side1=signedSide(p,s.a,s.b),cross=side0*side1<=0;if((cross&&Math.min(d0,d1)<26)||d1<12&&d0>22){const hitKey=s.id+':'+key,now=performance.now();if(now-(lastHit.get(hitKey)||0)>180){lastHit.set(hitKey,now);pluck(s,move)}}})}}lastTips.set(key,p)});
 if(!lastResults.length){lastTips.clear();pinchWasActive=false;preview=null;draggedEndpoint=null;}$('selectedState').textContent=selectedId?'№ '+(strings.findIndex(s=>s.id===selectedId)+1):'—';
 }
 const drumDefs={kick:{label:'Бочка',note:36,color:'#ffbd59'},snare:{label:'Малый',note:38,color:'#ff668c'},hat:{label:'Хай-хэт',note:42,color:'#63e6d3'},tom:{label:'Том',note:45,color:'#a78bfa'},crash:{label:'Тарелка',note:49,color:'#78b7ff'}};
