@@ -1,58 +1,62 @@
 <!doctype html>
-<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>WallTrace — Windows Webcam</title>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Virtual String — webcam instrument</title>
 <style>
-:root{color-scheme:dark;font-family:Segoe UI,Arial,sans-serif}*{box-sizing:border-box}body{margin:0;background:#10151d;color:#eef3fb}.app{max-width:1100px;margin:auto;padding:18px}.top{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}h1{font-size:25px;margin:4px 0}.sub{color:#9eacbf;font-size:14px}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}.toolbar button,.toolbar select,.toolbar input{background:#243247;color:#fff;border:1px solid #43536a;border-radius:9px;padding:10px 13px;font-size:14px}.toolbar button.primary{background:#1674d1;border-color:#1674d1}.toolbar button:disabled{opacity:.45}.stage{position:relative;width:100%;aspect-ratio:16/9;background:#05080c;border:1px solid #34445b;border-radius:14px;overflow:hidden}.stage video,.stage canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}.stage canvas{touch-action:none}.status{margin:12px 0;padding:12px 14px;border-radius:10px;background:#1a2636;color:#c6d6e9;min-height:44px}.walls{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.wall{background:#202d40;border:1px solid #3b506b;padding:9px 12px;border-radius:8px;cursor:pointer;color:#fff}.wall.active{border-color:#38a0ff}.note{color:#93a2b7;font-size:13px;line-height:1.5;margin-top:18px}.pill{padding:5px 9px;border-radius:20px;background:#253449;color:#9ed0ff;font-size:12px}
-</style></head><body><main class="app">
-<div class="top"><div><h1>WallTrace</h1><div class="sub">Компьютерная привязка кабельных трасс к изображению стены</div></div><span class="pill" id="cvState">Загрузка OpenCV…</span></div>
-<div class="toolbar">
-<button class="primary" id="camera">Включить веб-камеру</button>
-<select id="mode"><option value="draw">Создание трассы</option><option value="view">Просмотр трасс</option></select>
-<button id="capture" disabled>Запомнить стену</button><button id="save" disabled>Сохранить стену</button>
-<button id="undo" disabled>Отменить линию</button><button id="clear" disabled>Очистить линии</button>
-<button id="export">Экспорт JSON</button><label style="padding:10px 4px">Импорт <input id="import" type="file" accept="application/json" style="max-width:160px"></label>
+:root{color-scheme:dark;--bg:#080d18;--panel:#101a2b;--line:#54e8ff;--muted:#9aabc5}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% 0,#172641,#080d18 65%);font:15px system-ui,sans-serif;color:#eef5ff}
+main{max-width:1100px;margin:auto;padding:24px}h1{margin:0 0 6px;font-size:clamp(25px,4vw,38px)}p{color:var(--muted);margin:0 0 18px}
+.panel{background:#101a2bdc;border:1px solid #263b59;border-radius:18px;padding:16px;box-shadow:0 16px 50px #0006}
+.stage{position:relative;width:100%;aspect-ratio:16/9;background:#03060c;border-radius:12px;overflow:hidden}
+video,canvas{position:absolute;width:100%;height:100%;inset:0;object-fit:cover;transform:scaleX(-1)}canvas{pointer-events:none}
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:14px 0}
+button,select{border:1px solid #365274;background:#172840;color:white;border-radius:11px;padding:11px 15px;font:inherit}
+button.primary{background:linear-gradient(120deg,#087fbd,#6655dc);border:0;font-weight:700}
+button:disabled{opacity:.45}.status{margin-left:auto;color:#b8c8df;font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-top:12px}
+.stat{background:#0a1220;border:1px solid #243650;border-radius:12px;padding:12px}.stat b{display:block;font-size:13px;color:#91a8c8;margin-bottom:4px}
+.hint{font-size:13px;line-height:1.55;color:#aabbd3;margin-top:12px}label{display:flex;gap:8px;align-items:center;color:#c8d7ec;font-size:13px}
+@media(max-width:600px){main{padding:12px}.status{width:100%;margin:0}}
+</style>
+</head>
+<body>
+<main>
+<h1>Virtual String</h1>
+<p>Виртуальная струна между указательными пальцами — играй движением других пальцев.</p>
+<section class="panel">
+<div class="stage"><video id="video" playsinline muted></video><canvas id="overlay"></canvas></div>
+<div class="controls">
+<button class="primary" id="start">Включить камеру</button><button id="sound" disabled>Включить звук</button><button id="reset" disabled>Сбросить струну</button>
+<label><input id="skeleton" type="checkbox" checked> Показывать кисти</label><span class="status" id="status">Ожидаю запуск</span>
 </div>
-<div class="stage" id="stage"><video id="video" autoplay playsinline muted></video><canvas id="overlay"></canvas></div>
-<div class="status" id="status">1. Разреши доступ к веб-камере. 2. Наведи камеру на стену и нажми «Запомнить стену». 3. Нарисуй трассу мышкой.</div>
-<div class="walls" id="walls"></div>
-<div class="note">Как работает привязка: приложение сохраняет кадр стены, затем ищет в каждом новом кадре те же визуальные особенности и вычисляет перспективное преобразование. Лучше всего работают стены с фактурой, розетками, углами, дверями или другими неподвижными деталями. На совершенно однотонной стене, при сильном повороте, изменении света или перекрытии обзора трекинг может потеряться. Для точного повторного позиционирования профессионального AR это экспериментальный веб-прототип. Приложение показывает только линии, которые ты сам нанёс, и не обнаруживает скрытую проводку.</div>
+<div class="grid">
+<div class="stat"><b>Струна</b><span id="stringState">не создана</span></div><div class="stat"><b>Распознано рук</b><span id="handsState">0</span></div><div class="stat"><b>Нота</b><span id="noteState">—</span></div>
+</div>
+<div class="hint"><b>Как играть:</b> покажи обе руки в кадре и разведи указательные пальцы — между их кончиками появится струна. Проводи кончиком большого, среднего, безымянного пальца или мизинца через линию, чтобы дёрнуть её. Лучше работать при хорошем освещении и держать кисти полностью в кадре.</div>
+</section>
 </main>
-<script>var Module={onRuntimeInitialized:function(){window.__walltraceCvReady=true;document.dispatchEvent(new Event("walltrace-cv-ready"));}};</script><script async src="https://docs.opencv.org/4.x/opencv.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script><script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 <script>
-(()=>{'use strict';
-const $=id=>document.getElementById(id),video=$('video'),canvas=$('overlay'),ctx=canvas.getContext('2d');
-let stream=null,cvReady=!!window.__walltraceCvReady,reference=null,refMat=null,refKp=null,refDesc=null,strokes=[],currentStroke=null,wallName='Новая стена',db={},tracking=false,lastTrack=0,mode='draw',busy=false;
-const status=t=>$('status').textContent=t;
-const storeKey='walltrace_cv_walls_v1';
-document.addEventListener('walltrace-cv-ready',()=>{cvReady=true;$('cvState').textContent='OpenCV готов';status('OpenCV загружен. Включи веб-камеру для начала работы.')});
-try{db=JSON.parse(localStorage.getItem(storeKey)||'{}')}catch(_){db={}}
-function resize(){const r=canvas.getBoundingClientRect();const w=Math.max(1,Math.round(r.width*devicePixelRatio)),h=Math.max(1,Math.round(r.height*devicePixelRatio));if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}drawOverlay()}
-function imageData(){const c=document.createElement('canvas');c.width=video.videoWidth;c.height=video.videoHeight;c.getContext('2d').drawImage(video,0,0);return c.toDataURL('image/jpeg',.9)}
-function matFromData(url,done){const im=new Image();im.onload=()=>{const c=document.createElement('canvas');c.width=im.width;c.height=im.height;c.getContext('2d').drawImage(im,0,0);done(cv.imread(c))};im.src=url}
-function prepareReference(mat){if(refMat)refMat.delete();if(refDesc)refDesc.delete();refMat=mat;const gray=new cv.Mat();cv.cvtColor(refMat,gray,cv.COLOR_RGBA2GRAY);refKp=new cv.KeyPointVector();refDesc=new cv.Mat();const orb=new cv.ORB(1800);orb.detectAndCompute(gray,new cv.Mat(),refKp,refDesc);gray.delete();orb.delete();if(refDesc.rows<12){status('На стене мало заметных деталей. Наведи камеру так, чтобы в кадре были углы, розетки, текстура или предметы рядом со стеной.');return false}return true}
-function setCanvasFit(){resize()}
-async function startCamera(){try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}},audio:false});video.srcObject=stream;await video.play();document.getElementById('stage').style.aspectRatio=video.videoWidth+'/'+video.videoHeight;setCanvasFit();status('Камера включена. Наведи её на стену, дождись чёткого изображения и нажми «Запомнить стену».');$('capture').disabled=false;$('mode').disabled=false;requestAnimationFrame(loop)}catch(e){status('Не удалось включить веб-камеру: '+e.message+'. Проверь разрешение браузера и подключение камеры.')}}
-function captureWall(){if(!video.videoWidth)return;reference=imageData();strokes=[];wallName=prompt('Название стены:','Стена '+(Object.keys(db).length+1))||'Стена';matFromData(reference,m=>{const ok=prepareReference(m);tracking=false;status(ok?'Основа стены сохранена. Теперь рисуй кабель мышкой прямо на изображении.':'Кадр сохранён, но для надёжной привязки нужно больше деталей. Попробуй другой ракурс.');$('save').disabled=false;$('undo').disabled=false;$('clear').disabled=false;drawOverlay()})}
-function coords(e){const r=canvas.getBoundingClientRect();return [(e.clientX-r.left)/r.width,(e.clientY-r.top)/r.height]}
-canvas.addEventListener('pointerdown',e=>{if(mode!=='draw'||!reference||!refMat)return;canvas.setPointerCapture(e.pointerId);const p=coords(e);currentStroke=[p];strokes.push(currentStroke);drawOverlay()});
-canvas.addEventListener('pointermove',e=>{if(!currentStroke)return;currentStroke.push(coords(e));drawOverlay()});
-function endDraw(){currentStroke=null}canvas.addEventListener('pointerup',endDraw);canvas.addEventListener('pointercancel',endDraw);
-function drawPath(c,points,w,h){if(!points||points.length<1)return;c.beginPath();c.moveTo(points[0][0]*w,points[0][1]*h);for(let i=1;i<points.length;i++)c.lineTo(points[i][0]*w,points[i][1]*h);c.strokeStyle='#ff3b30';c.lineWidth=Math.max(3,w*.004);c.lineCap='round';c.lineJoin='round';c.stroke()}
-function drawOverlay(){if(!canvas.width)return;ctx.clearRect(0,0,canvas.width,canvas.height);if(!reference)return;const w=canvas.width,h=canvas.height;if(mode==='draw'){for(const s of strokes)drawPath(ctx,s,w,h)}}
-function saveWall(){if(!reference)return;db[wallName]={name:wallName,reference,strokes,updated:new Date().toISOString()};localStorage.setItem(storeKey,JSON.stringify(db));renderWalls();status('Стена «'+wallName+'» сохранена в этом браузере. Для просмотра выбери режим «Просмотр трасс» и эту стену.') }
-function renderWalls(){const el=$('walls');el.innerHTML='';Object.keys(db).forEach(n=>{const b=document.createElement('button');b.className='wall'+(n===wallName?' active':'');b.textContent=n;b.onclick=()=>loadWall(n);el.appendChild(b)})}
-function loadWall(n){const d=db[n];if(!d)return;wallName=n;reference=d.reference;strokes=d.strokes||[];tracking=false;matFromData(reference,m=>{const ok=prepareReference(m);renderWalls();status(ok?'Загружена «'+n+'». Наведи камеру на ту же стену. Идёт поиск совпадения…':'У загруженной стены недостаточно визуальных особенностей.');});}
-function transformPoint(H,x,y){const a=H.data64F;const z=a[6]*x+a[7]*y+a[8];return [(a[0]*x+a[1]*y+a[2])/z,(a[3]*x+a[4]*y+a[5])/z]}
-function trackFrame(){if(!cvReady||!reference||!refDesc||!video.videoWidth||busy)return;busy=true;let src,gray,kp,desc,orb,bf,knn,srcPts,dstPts,mask,H;try{
-const tmp=document.createElement('canvas');tmp.width=video.videoWidth;tmp.height=video.videoHeight;tmp.getContext('2d').drawImage(video,0,0);src=cv.imread(tmp);gray=new cv.Mat();cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY);kp=new cv.KeyPointVector();desc=new cv.Mat();orb=new cv.ORB(1800);orb.detectAndCompute(gray,new cv.Mat(),kp,desc);bf=new cv.BFMatcher(cv.NORM_HAMMING,false);knn=new cv.DMatchVectorOfVector();bf.knnMatch(refDesc,desc,knn,2);srcPts=[];dstPts=[];
-for(let i=0;i<knn.size();i++){const v=knn.get(i);if(v.size()>=2){const m=v.get(0),n=v.get(1);if(m.distance<.72*n.distance){const a=refKp.get(m.queryIdx).pt,b=kp.get(m.trainIdx).pt;srcPts.push(a.x,a.y);dstPts.push(b.x,b.y)}}}
-if(srcPts.length>=10){const s=cv.matFromArray(srcPts.length/2,1,cv.CV_32FC2,srcPts),d=cv.matFromArray(dstPts.length/2,1,cv.CV_32FC2,dstPts);mask=new cv.Mat();H=cv.findHomography(s,d,cv.RANSAC,4,mask);const inliers=mask.data.reduce((a,b)=>a+(b?1:0),0);if(!H.empty()&&inliers>=8){tracking=true;ctx.clearRect(0,0,canvas.width,canvas.height);const rect=canvas.getBoundingClientRect(),sx=rect.width/video.videoWidth*devicePixelRatio,sy=rect.height/video.videoHeight*devicePixelRatio;for(const line of strokes){if(line.length<1)continue;ctx.beginPath();line.forEach((p,i)=>{const q=transformPoint(H,p[0]*refMat.cols,p[1]*refMat.rows);const x=q[0]*sx,y=q[1]*sy;i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.strokeStyle='#ff3b30';ctx.lineWidth= Math.max(3,canvas.width*.004);ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke()}status('Стена найдена · совпадений: '+inliers+' · кабель отображается на поверхности');}else{tracking=false;status('Ищу сохранённую стену… Наведи камеру на неё более прямо.')}s.delete();d.delete()}else{tracking=false;status('Ищу сохранённую стену… совпадений пока мало.')}
-}catch(e){console.error(e)}finally{[src,gray,kp,desc,orb,bf,knn,mask,H].forEach(x=>{try{x&&x.delete()}catch(_){}});busy=false}}
-function loop(t){if(t-lastTrack>250){lastTrack=t;if(mode==='view'&&reference)trackFrame();}requestAnimationFrame(loop)}
-$('camera').onclick=startCamera;$('capture').onclick=captureWall;$('save').onclick=saveWall;$('undo').onclick=()=>{strokes.pop();drawOverlay()};$('clear').onclick=()=>{strokes=[];drawOverlay()};$('mode').onchange=()=>{mode=$('mode').value;status(mode==='draw'?'Режим создания: рисуй мышкой по сохранённому кадру стены.':'Режим просмотра: приложение ищет сохранённую стену в видеопотоке.');if(mode==='draw')drawOverlay()};
-$('export').onclick=()=>{const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='walltrace-backup.json';a.click();URL.revokeObjectURL(a.href)};
-$('import').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const x=JSON.parse(await f.text());db={...db,...x};localStorage.setItem(storeKey,JSON.stringify(db));renderWalls();status('Импорт завершён. Выбери стену из списка.')}catch(_){status('Не удалось прочитать JSON-файл.')}};
-window.addEventListener('resize',setCanvasFit);
-if(cvReady){$('cvState').textContent='OpenCV готов'}
-renderWalls();
-})();
-</script></body></html>
+const video=document.getElementById('video'),canvas=document.getElementById('overlay'),ctx=canvas.getContext('2d');
+const startBtn=document.getElementById('start'),soundBtn=document.getElementById('sound'),resetBtn=document.getElementById('reset');
+const statusEl=document.getElementById('status'),stringEl=document.getElementById('stringState'),handsEl=document.getElementById('handsState'),noteEl=document.getElementById('noteState');
+let handsModel=null,camera=null,audio=null,master=null,soundOn=false,lastTips=new Map(),lastPluck=0,flash=0,frequency=220;
+const fingerTips=[4,8,12,16,20],colors=['#ffd166','#5eead4','#a78bfa','#fb7185','#facc15'];
+const connections=[[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
+function resize(){const r=canvas.getBoundingClientRect();canvas.width=Math.round(r.width*devicePixelRatio);canvas.height=Math.round(r.height*devicePixelRatio);ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0)}
+new ResizeObserver(resize).observe(canvas);
+function point(lm,i){return{x:lm[i].x*canvas.clientWidth,y:lm[i].y*canvas.clientHeight}}
+function distPointSegment(p,a,b){const dx=b.x-a.x,dy=b.y-a.y,len=dx*dx+dy*dy;if(!len)return Math.hypot(p.x-a.x,p.y-a.y);const t=Math.max(0,Math.min(1,((p.x-a.x)*dx+(p.y-a.y)*dy)/len));return Math.hypot(p.x-(a.x+t*dx),p.y-(a.y+t*dy))}
+function ensureAudio(){if(!audio){audio=new(window.AudioContext||window.webkitAudioContext)();master=audio.createGain();master.gain.value=.22;master.connect(audio.destination)}if(audio.state==='suspended')audio.resume()}
+function pluck(speed=1){if(!soundOn)return;ensureAudio();const now=audio.currentTime,osc=audio.createOscillator(),gain=audio.createGain(),filter=audio.createBiquadFilter();frequency=Math.max(110,Math.min(880,frequency));osc.type='triangle';osc.frequency.setValueAtTime(frequency,now);osc.frequency.exponentialRampToValueAtTime(frequency*.995,now+.22);filter.type='lowpass';filter.frequency.value=2200;gain.gain.setValueAtTime(0,now);gain.gain.linearRampToValueAtTime(Math.min(.8,.18+speed*.012),now+.006);gain.gain.exponentialRampToValueAtTime(.001,now+1.15);osc.connect(filter);filter.connect(gain);gain.connect(master);osc.start(now);osc.stop(now+1.2);flash=1;noteEl.textContent=Math.round(frequency)+' Hz';frequency*=1.059463}
+function drawHand(lm){const pts=lm.map((_,i)=>point(lm,i));ctx.lineWidth=2;ctx.strokeStyle='#3de6a0';for(const[a,b]of connections){ctx.beginPath();ctx.moveTo(pts[a].x,pts[a].y);ctx.lineTo(pts[b].x,pts[b].y);ctx.stroke()}pts.forEach((p,i)=>{ctx.beginPath();ctx.fillStyle=fingerTips.includes(i)?colors[fingerTips.indexOf(i)]:'#ff4f64';ctx.arc(p.x,p.y,fingerTips.includes(i)?4:2.7,0,Math.PI*2);ctx.fill()})}
+function onResults(results){const w=canvas.clientWidth;ctx.clearRect(0,0,w,canvas.clientHeight);const list=results.multiHandLandmarks||[];handsEl.textContent=list.length;if(document.getElementById('skeleton').checked)list.forEach(drawHand);
+if(list.length>=2){const a=point(list[0],8),b=point(list[1],8),length=Math.hypot(b.x-a.x,b.y-a.y);if(length>45){ctx.save();ctx.lineCap='round';ctx.shadowBlur=flash*24;ctx.shadowColor='#57eaff';ctx.strokeStyle='#d7fbff';ctx.lineWidth=3+flash*3;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.strokeStyle='#58eaff';ctx.lineWidth=1.2;ctx.stroke();ctx.restore();[a,b].forEach(p=>{ctx.beginPath();ctx.fillStyle='#e7fcff';ctx.arc(p.x,p.y,5,0,Math.PI*2);ctx.fill()});stringEl.textContent='создана · '+Math.round(length)+' px';
+list.forEach((lm,hi)=>fingerTips.forEach(idx=>{if(idx===8)return;const p=point(lm,idx),key=hi+':'+idx,prev=lastTips.get(key);if(prev){const speed=Math.hypot(p.x-prev.x,p.y-prev.y),d=distPointSegment(p,a,b),oldD=distPointSegment(prev,a,b);if(d<15&&oldD>18&&speed>5&&performance.now()-lastPluck>130){lastPluck=performance.now();pluck(speed)}}lastTips.set(key,p)}));frequency=196+Math.min(220,length/Math.max(w,1)*440);
+}else stringEl.textContent='сведи руки чуть дальше'}else{stringEl.textContent='покажи обе руки';lastTips.clear()}flash*=.82}
+async function boot(){startBtn.disabled=true;statusEl.textContent='Запрашиваю доступ к камере…';try{if(!window.Hands||!window.Camera)throw new Error('Не загрузилась библиотека распознавания. Проверь интернет и обнови страницу.');handsModel=new Hands({locateFile:file=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});handsModel.setOptions({maxNumHands:2,modelComplexity:1,minDetectionConfidence:.65,minTrackingConfidence:.6});handsModel.onResults(onResults);camera=new Camera(video,{onFrame:async()=>{await handsModel.send({image:video})},width:1280,height:720});await camera.start();resize();statusEl.textContent='Камера работает · покажи обе руки';soundBtn.disabled=false;resetBtn.disabled=false}catch(e){statusEl.textContent='Ошибка: '+e.message;startBtn.disabled=false}}
+startBtn.addEventListener('click',boot);soundBtn.addEventListener('click',()=>{ensureAudio();soundOn=!soundOn;soundBtn.textContent=soundOn?'Выключить звук':'Включить звук';statusEl.textContent=soundOn?'Звук включён':'Звук выключен'});resetBtn.addEventListener('click',()=>{lastTips.clear();frequency=220;noteEl.textContent='—';statusEl.textContent='Струна сброшена'});
+</script>
+</body></html>
