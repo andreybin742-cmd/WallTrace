@@ -1,19 +1,27 @@
-# WallTrace
+# Virtual String
 
-WallTrace currently has two experimental implementations:
+Репозиторий перепрофилирован под браузерный музыкальный инструмент Virtual String. Предыдущая идея WallTrace (разметка кабельных трасс на стене) больше не используется в активном приложении.
 
-- **Windows / desktop browser webcam prototype (main demo):** GitHub Pages app. Open https://andreybin742-cmd.github.io/WallTrace/ in Chrome or Edge on Windows. It uses OpenCV feature matching and a homography to re-project saved cable strokes onto the live camera view when the same wall is recognized.
-- **Native iOS ARKit prototype:** see [ios/README.md](ios/README.md) and [the Xcode project](ios/WallTrace.xcodeproj).
+## Запуск
+Открой GitHub Pages: https://andreybin742-cmd.github.io/WallTrace/ (после публикации изменений).
+Для локального запуска из папки с `index.html` выполни:
 
-## Windows webcam demo
-1. Use a Windows PC with a webcam and open the Pages link in Chrome or Edge.
-2. Allow camera access.
-3. Point the camera at the wall and click **Запомнить стену**.
-4. Draw routes with the mouse.
-5. Click **Сохранить стену**.
-6. Switch to **Просмотр трасс**, select the saved wall and point the camera at it again.
+```bash
+python -m http.server 8000
+```
 
-The web app stores saved walls in browser local storage. Use JSON export for backup or transfer. OpenCV.js is loaded from the OpenCV documentation CDN, so an internet connection is needed.
+Затем открой http://localhost:8000 в Chrome или Edge.
 
-## Accuracy and safety
-This is a computer-vision prototype, not depth-aware AR. It matches visual features and estimates a planar perspective transform. It works best when the wall and nearby static details have visible texture/features and lighting is similar. Plain walls, large viewpoint changes, occlusion, and lighting changes can prevent relocalization. It records only user-drawn routes; it does not detect hidden wires or pipes and is not a drilling-safety detector.
+Нажми «Включить камеру» и разреши доступ к веб-камере. Затем нажми «Включить звук». Интернет нужен для загрузки MediaPipe с CDN.
+
+## Управление
+- Покажи обе руки в кадре.
+- Разведи указательные пальцы: между их кончиками появится виртуальная струна.
+- Проводи большим, средним, безымянным пальцем или мизинцем через линию, чтобы попытаться дёрнуть струну.
+- Переключай отображение скелета кистей чекбоксом.
+
+## Статус прототипа
+Это ранний MVP: струна пока соединяет кончики указательных пальцев в 2D-кадре веб-камеры. Звук синтезируется средствами браузера. Чувствительность распознавания щипка, физику колебаний и тембр предстоит настраивать на реальной камере.
+
+## Ограничения
+Нужны хорошее освещение и обе кисти в кадре. Это не полноценная 3D AR-система.
